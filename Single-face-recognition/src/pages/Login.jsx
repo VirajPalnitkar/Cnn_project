@@ -12,7 +12,6 @@ const Login = () => {
   const handleLogin = (e) => {
     e.preventDefault();
 
-    // Simulated authentication check
     if (username === 'admin' && password === 'password') {
       navigate('/dashboard',{replace:true});
     } else {
@@ -48,6 +47,7 @@ const Login = () => {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          onFocus={handleFocus}
           required
         />
         <button type="submit">Login</button>

@@ -1,0 +1,10 @@
+.capture{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+}
+button{
+    margin: 20px;
+}

@@ -7,6 +7,8 @@ from keras_facenet import FaceNet
 from sklearn.metrics.pairwise import cosine_similarity
 from numpy.linalg import norm
 from flask_cors import CORS  # Import CORS
+from scipy.spatial.distance import euclidean
+
 
 # Initialize Flask and MongoDB
 app = Flask(__name__)
@@ -17,16 +19,6 @@ embeddings_collection = db['embeddings']
 
 # Load FaceNet model
 embedder = FaceNet()
-
-# Function to compare embeddings using Cosine Similarity
-def compare_embeddings_cosine(embedding1, embedding2, threshold=0.5):
-    similarity = cosine_similarity([embedding1], [embedding2])[0][0]
-    return similarity > threshold, similarity
-
-# Function to compare embeddings using Euclidean Distance
-def compare_embeddings_euclidean(embedding1, embedding2, threshold=10):
-    distance = norm(embedding1 - embedding2)
-    return distance < threshold, distance
 
 
 @app.route('/dashboard/register', methods=['POST'])
@@ -75,7 +67,7 @@ def compare_face():
         return jsonify({'error': 'Invalid image format, expected 3D array (H, W, C)'}), 400
     
     # Get the face embeddings of the captured image
-    captured_embeddings = embedder.embeddings([image])[0]  # Get the first (and only) embedding
+    captured_embeddings = embedder.embeddings([image])  # Get the first (and only) embedding
 
     # Fetch the stored embedding for the provided phone number
     user_data = embeddings_collection.find_one({'phone_number': phone_number})
@@ -91,9 +83,13 @@ def compare_face():
         return jsonify({'error': 'Invalid embedding dimensions'}), 500
     
     # Perform the comparison (L2 distance or other method)
-    is_match = np.allclose(captured_embeddings, stored_embeddings, atol=1e-5)
-
-    return jsonify({'match': is_match})
+    
+    def are_faces_same(embeddings1, embeddings2, threshold=0.8):
+        distance = euclidean(embeddings1[0], embeddings2[0])
+        return distance<threshold,distance
+    
+    is_match,distance =are_faces_same(captured_embeddings,stored_embeddings)
+    return jsonify({'match': is_match,'distance':distance})
 
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { useLocation } from 'react-router-dom';  // Import useLocation to access the mobile number
 import axios from 'axios';  // Import axios to send requests
+import '../styles/Capture.css';
 
 export default function Capture() {
   const webcamRef = useRef(null);
@@ -72,7 +73,7 @@ export default function Capture() {
         />
         <button onClick={capture}>Capture</button>
         {capturedImage && (
-          <div>
+          <div className="capture">
             <h3>Captured Image:</h3>
             <img src={capturedImage} alt="Captured" />
             <button onClick={handleCompare}>Compare with Database</button>

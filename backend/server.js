@@ -1,36 +1,64 @@
-// backend/server.js
-const express = require('express');
-const mongoose = require('mongoose');
-const multer = require('multer');
-const cors = require('cors');
-require('dotenv').config();
+import { User } from "./schemas/User_details.js";
+import mongoose from "mongoose";
+import express from 'express';
+import cors from 'cors';
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+const app=express();
+const PORT=5555;
+const MONGO_URL='mongodb://localhost:27017/User_login_details';
 
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI);
+app.post('/register',async (req,res)=>{
+  if(!req.body.userName || !req.body.rollNumber){
+    return res.status(400).send({message:"Enter all the details"});
+  }
+  const userInfo={
+    userName:req.body.userName,
+    rollNumber:req.body.rollNumber
+  };
+  try{
+    const existingUser=await User.findOne({rollNumber:req.body.rollNumber});
+    if(existingUser){
+      return res.status(409).json({message:"User with this roll number already exists"});
+    }
+    const newUser=new User(userInfo);
+    await newUser.save();
+    res.status(201).json({message:"New user registered successfully"});
+  }
+  catch(error){
+    res.status(500).send({message:"Server error"});
+  }
 
-const imageSchema = new mongoose.Schema({
-  image: { type: String, required: true },
-});
+})
 
-const Image = mongoose.model('Image', imageSchema);
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+app.post('/login',async (req,res)=>{
+  if(!req.body.userName || !req.body.rollNumber){
+    return res.status(400).send({message:"Enter all the details"});
+  }
+  try{
+    const existingUser=await User.findOne({rollNumber:req.body.rollNumber});
+    if(existingUser){
+      return res.status(201).json({message:"Exists"});
+    }
+    else{
+      return res.status(400).json({message:"The user does not exist"});
+    }
+  }
+  catch(error){
+    res.status(500).send({message:"Server error"});
+  }
+})
 
-// Route for uploading images
-app.post('/upload', upload.single('image'), async (req, res) => {
-  const newImage = new Image({ image: req.file.buffer.toString('base64') });
-  await newImage.save();
-  res.json({ message: 'Image saved successfully!' });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
-
+mongoose.connect(MONGO_URL)
+.then(()=>{
+  console.log("Connected to mongodb ", MONGO_URL);
+  app.listen(PORT,()=>{
+    console.log("Server started on port",PORT);
+  })
+})
+.catch((error)=>{
+  console.log(error);
+})

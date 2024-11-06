@@ -35,7 +35,7 @@ const Login = () => {
         });
       }
       if (response.data.message === "Exists") {
-        navigate("/dashboard");
+        navigate("/dashboard",{replace:true});
       }
     } catch (error) {
       if(error.response.status===400){

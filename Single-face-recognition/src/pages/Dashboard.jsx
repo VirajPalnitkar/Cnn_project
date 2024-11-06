@@ -24,6 +24,7 @@ export default function Dashboard(){
                 <h1>
                     Multiple face recognition
                 </h1>
+                <button onClick={()=>{navigate('/dashboard/multiple')}}>Identify individuals in groups</button>
             </div>
             <div className="Choice">
                 <h1>

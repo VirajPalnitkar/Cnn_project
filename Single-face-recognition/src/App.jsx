@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Register from "./pages/Register";
 import Mark from "./pages/Mark";
 import Capture from "./pages/Capture";
+import GroupAuth from "./pages/Groupauth";
 
 function App(){
   return(
@@ -14,6 +15,7 @@ function App(){
         <Route path="/dashboard/register" element={<Register/>}/>
         <Route path="/dashboard/mark" element={<Mark/>}/>
         <Route path="/dashboard/mark/capture" element={<Capture/>}/>
+        <Route path="/dashboard/multiple" element={<GroupAuth/>}/>
       </Routes>
     </Router>
   );

@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
-import Webcam from 'react-webcam';
-import axios from 'axios';
+import React, { useState, useRef } from "react";
+import Webcam from "react-webcam";
+import axios from "axios";
 
 const GroupAuth = () => {
   const [matches, setMatches] = useState([]);
@@ -11,8 +11,8 @@ const GroupAuth = () => {
 
     // Convert base64 image string to Blob
     const blob = await fetch(imageSrc)
-      .then(res => res.blob())
-      .then(blob => new File([blob], "capture.jpg", { type: "image/jpeg" }));
+      .then((res) => res.blob())
+      .then((blob) => new File([blob], "capture.jpg", { type: "image/jpeg" }));
 
     return blob;
   };
@@ -21,47 +21,61 @@ const GroupAuth = () => {
     const imageFile = await capture();
 
     const formData = new FormData();
-    formData.append('file', imageFile);
+    formData.append("file", imageFile);
 
     try {
-      const response = await axios.post('http://localhost:5000/process_group_image', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await axios.post(
+        "http://localhost:5000/process_group_image",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
       setMatches(response.data.matches);
       console.log(response.data.distances);
     } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to process image.');
+      console.error("Error uploading image:", error);
+      alert("Failed to process image.");
     }
   };
 
   return (
-    <div>
-      <Webcam ref={webcamRef} screenshotFormat="image/jpeg" />
-      <button onClick={handleUpload}>Capture & Upload for Authentication</button>
-
-      <div>
-        {matches.length > 0 && matches.map((userMatches, idx) => (
-          <div key={idx}>
-            <h4>Face {idx + 1}</h4>
-            {userMatches.length ? (
-              <ul>
-                {userMatches.map((user, userIdx) => (
-                  <li key={userIdx}>{user}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No match found</p>
-            )}
-          </div>
-        ))}
+    <div className="container">
+      <div className="row">
+        <div className="col offset-2">
+          <Webcam ref={webcamRef} screenshotFormat="image/jpeg" width={600} />
+        </div>
       </div>
+      <div className="row">
+        <div className="col d-flex justify-content-center">
+          <button className="btn btn-primary" onClick={handleUpload}>
+            Capture & Upload for Authentication
+          </button>
+        </div>
+      </div>
+      <div className="row">
+        {matches.length > 0 &&
+          matches.map((userMatches, idx) => (
+            <div key={idx} className="col">
+              <h4>Face {idx + 1}</h4>
+              {userMatches.length ? (
+                <ul>
+                  {userMatches.map((user, userIdx) => (
+                    <li key={userIdx}>{user}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No match found</p>
+              )}
+            </div>
+          ))}
+      </div>
+      <div></div>
     </div>
   );
 };
 
 export default GroupAuth;
-
 
 // import React, { useState, useRef } from 'react';
 // import Webcam from 'react-webcam';
@@ -124,3 +138,27 @@ export default GroupAuth;
 // };
 
 // export default GroupAuth;
+
+{
+  /* <div>
+      <Webcam ref={webcamRef} screenshotFormat="image/jpeg" width={600}/>
+      <button onClick={handleUpload}>Capture & Upload for Authentication</button>
+
+      <div>
+        {matches.length > 0 && matches.map((userMatches, idx) => (
+          <div key={idx}>
+            <h4>Face {idx + 1}</h4>
+            {userMatches.length ? (
+              <ul>
+                {userMatches.map((user, userIdx) => (
+                  <li key={userIdx}>{user}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No match found</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div> */
+}

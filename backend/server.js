@@ -52,6 +52,7 @@ app.post('/login',async (req,res)=>{
   }
 })
 
+
 mongoose.connect(MONGO_URL)
 .then(()=>{
   console.log("Connected to mongodb ", MONGO_URL);

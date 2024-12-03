@@ -25,3 +25,7 @@ h2{
 button{
     margin: 20px;
 }
+
+#first:hover,#second:hover,#third:hover {
+    box-shadow: 6px 7px 27px black;
+}

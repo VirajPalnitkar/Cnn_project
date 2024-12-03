@@ -6,19 +6,21 @@ import io
 from keras_facenet import FaceNet
 from sklearn.metrics.pairwise import cosine_similarity
 from numpy.linalg import norm
-from flask_cors import CORS  # Import CORS
+from flask_cors import CORS 
 from scipy.spatial.distance import euclidean
 from mtcnn import MTCNN
 from scipy.spatial.distance import cosine
+import torch
+import cv2
 
-# Initialize Flask and MongoDB
+
 app = Flask(__name__)
-CORS(app)  # Enable CORS for the entire application
+CORS(app)  
 client = MongoClient('mongodb://localhost:27017/')
 db = client['face_recognition_db']
 embeddings_collection = db['embeddings']
 
-# Load FaceNet model
+
 embedder = FaceNet()
 detector = MTCNN()
 
@@ -31,7 +33,7 @@ def process_group_image():
     image = Image.open(io.BytesIO(file.read()))
     image_np = np.array(image)
 
-    # Detect faces in the image
+   
     faces = detector.detect_faces(image_np)
     if not faces:
         return jsonify({'error': 'No faces detected'}), 400
@@ -43,7 +45,7 @@ def process_group_image():
         face_embedding = embedder.embeddings([face_image])[0]
         embeddings.append(np.array(face_embedding))
 
-    # Check each embedding against stored embeddings
+    
     match_results = []
     distances=[]
     for face_embedding in embeddings:
@@ -52,7 +54,7 @@ def process_group_image():
             stored_embedding = np.array(stored_user['embeddings'])
             similarity = cosine(face_embedding, stored_embedding[0])
             distances.append(similarity)
-            if similarity >0.8:  # Adjust threshold as needed
+            if similarity <0.8:  
                 matched_users.append(stored_user['username'])
         match_results.append(matched_users)
 
@@ -70,18 +72,16 @@ def upload_image():
     if file.filename == '' or not username or not phone_number:
         return jsonify({'error': 'Missing data'}), 400
 
-    # Load the image and convert it into a numpy array
+    
     image = Image.open(io.BytesIO(file.read()))
     image = np.array(image)
 
-    # Get the face embeddings
     embeddings = embedder.embeddings([image])
 
-    # Save the embeddings, username, and phone number to MongoDB
     embeddings_data = {
         'username': username,
         'phone_number': phone_number,
-        'embeddings': embeddings.tolist()  # Store as list in MongoDB
+        'embeddings': embeddings.tolist() 
     }
     result = embeddings_collection.insert_one(embeddings_data)
 
@@ -95,31 +95,28 @@ def compare_face():
     phone_number = request.form['phoneNumber']
     file = request.files['file']
     
-    # Load the image and convert it into a numpy array
+   
     image = Image.open(io.BytesIO(file.read()))
     image = np.array(image)
 
-    # Ensure the image has 3 dimensions (height, width, channels) and is a valid image format
     if len(image.shape) != 3:
         return jsonify({'error': 'Invalid image format, expected 3D array (H, W, C)'}), 400
     
-    # Get the face embeddings of the captured image
-    captured_embeddings = embedder.embeddings([image])  # Get the first (and only) embedding
+    captured_embeddings = embedder.embeddings([image]) 
 
-    # Fetch the stored embedding for the provided phone number
     user_data = embeddings_collection.find_one({'phone_number': phone_number})
     
     if not user_data:
         return jsonify({'error': 'User not found'}), 404
     
-    # Compare the embeddings
+ 
     stored_embeddings = np.array(user_data['embeddings'])
     
-    # Ensure both embeddings are 2D arrays
+   
     if captured_embeddings.ndim != 2 or stored_embeddings.ndim != 2:
         return jsonify({'error': 'Invalid embedding dimensions'}), 500
     
-    # Perform the comparison (L2 distance or other method)
+
     
     def are_faces_same(embeddings1, embeddings2, threshold=0.8):
         distance = euclidean(embeddings1[0], embeddings2[0])
@@ -127,6 +124,58 @@ def compare_face():
     
     is_match,distance =are_faces_same(captured_embeddings,stored_embeddings)
     return jsonify({'match': is_match,'distance':distance})
+
+@app.route('/compare_custom', methods=['POST'])
+def compare_face_custom():
+    if 'file' not in request.files or 'phoneNumber' not in request.form:
+        return jsonify({'error': 'Missing data'}), 400
+
+    phone_number = request.form['phoneNumber']
+    file = request.files['file']
+    
+   
+    image = Image.open(io.BytesIO(file.read()))
+    image = np.array(image)
+
+    if len(image.shape) != 3:
+        return jsonify({'error': 'Invalid image format, expected 3D array (H, W, C)'}), 400
+    
+    captured_embeddings = embedder.embeddings([image]) 
+
+    user_data = embeddings_collection.find_one({'phone_number': phone_number})
+    
+    if not user_data:
+        return jsonify({'error': 'User not found'}), 404
+    
+ 
+    stored_embeddings = np.array(user_data['embeddings'])
+    
+   
+    if captured_embeddings.ndim != 2 or stored_embeddings.ndim != 2:
+        return jsonify({'error': 'Invalid embedding dimensions'}), 500
+    
+
+    
+    def are_faces_same(embeddings1, embeddings2, threshold=0.8):
+        distance = euclidean(embeddings1[0], embeddings2[0])
+        return distance<threshold,distance
+    
+    is_match,distance =are_faces_same(captured_embeddings,stored_embeddings)
+    return jsonify({'match': is_match,'distance':distance})
+
+
+
+
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
+@app.route('/detect', methods=['POST'])
+def detect():
+    file = request.files['image']
+    image = np.fromstring(file.read(), np.uint8)
+    image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+    results = model(image)
+    detections = results.xyxy[0].tolist()  # Bounding boxes
+    return jsonify({'detections': detections, 'count': len(detections)})
+
 
 
 if __name__ == '__main__':

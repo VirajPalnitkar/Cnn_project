@@ -1,14 +1,14 @@
 import React, { useRef, useState, useEffect } from 'react';
 import Webcam from 'react-webcam';
-import { useLocation } from 'react-router-dom';  // Import useLocation to access the mobile number
-import axios from 'axios';  // Import axios to send requests
+import { useLocation } from 'react-router-dom';  
+import axios from 'axios';  
 import '../styles/Capture.css';
 
 export default function Capture() {
   const webcamRef = useRef(null);
   const [capturedImage, setCapturedImage] = useState(null);
-  const location = useLocation();  // Get the state passed from Mark component
-  const { mobileNumber } = location.state || {};  // Retrieve the mobile number
+  const location = useLocation();  
+  const { mobileNumber } = location.state || {};  
 
   useEffect(() => {
     console.log("Mobile Number passed to Capture:", mobileNumber);
@@ -33,15 +33,13 @@ export default function Capture() {
         alert('No mobile number provided. Please try again.');
         return;
     }
-
-    // Convert the base64 image to a blob
+  
+    
     const blob = await fetch(capturedImage).then(res => res.blob());
 
-    // Create FormData to send the image and mobile number to the backend
     const formData = new FormData();
     formData.append('file', blob, 'captured-image.jpg');
-    formData.append('phoneNumber', mobileNumber);  // Append mobile number for comparison
-
+    formData.append('phoneNumber', mobileNumber);  
     try {
         const response = await axios.post('http://127.0.0.1:5000/compare', formData, {
             headers: {
@@ -50,7 +48,7 @@ export default function Capture() {
         });
         console.log('Response from backend:', response.data);
         if (response.data.match) {
-            alert('Face matched!');
+            alert('Attendence Marked!');
         } else {
             alert('Face not matched!');
         }
